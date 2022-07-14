@@ -26,7 +26,22 @@ class PhLocationService
     districts = JSON.parse(response.body)
     districts.each do |district|
     region = Region.find_by_code(district['regionCode'])
-    Province.find_or_create_by(code: district['code'], name: district['name'], region: region)
+    District.find_or_create_by(code: district['code'], name: district['name'], region: region)
+    end
+  end
+
+  def get_cities_municipalities
+    response = RestClient.get("#{url}/cities-municipalities")
+    cities_municipalities = JSON.parse(response.body)
+    cities_municipalities.each do |city_municipality|
+      if city_municipality['districtCode']
+        district = District.find_by_code(city_municipality['districtCode'])
+        CityMunicipality.find_or_create_by(code: city_municipality['code'], name: city_municipality['name'], is_capital:city_municipality['isCapital'], is_city:city_municipality['isCity'], is_municipality: city_municipality['isMunicipality'], district: district)
+      else
+        province = Province.find_by_code(city_municipality['provinceCode'])
+        CityMunicipality.find_or_create_by(code: city_municipality['code'], name: city_municipality['name'], is_capital:city_municipality['isCapital'], is_city:city_municipality['isCity'], is_municipality: city_municipality['isMunicipality'], province: province)
+      end
+
     end
   end
 end
