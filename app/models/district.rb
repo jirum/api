@@ -3,5 +3,5 @@ class District < ApplicationRecord
   validates_presence_of :name
 
   belongs_to :region
-  has_many :cities_municipalities
+  has_many :city_municipalities
 end
