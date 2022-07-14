@@ -1,5 +1,6 @@
 class PhLocationService
   attr_reader :url
+
   def initialize
     @url = 'https://psgc.gitlab.io/api'
   end
@@ -25,23 +26,35 @@ class PhLocationService
     response = RestClient.get("#{url}/districts")
     districts = JSON.parse(response.body)
     districts.each do |district|
-    region = Region.find_by_code(district['regionCode'])
-    District.find_or_create_by(code: district['code'], name: district['name'], region: region)
+      region = Region.find_by_code(district['regionCode'])
+      District.find_or_create_by(code: district['code'], name: district['name'], region: region)
     end
   end
 
-  def get_cities_municipalities
+  def get_city_municipalities
     response = RestClient.get("#{url}/cities-municipalities")
     cities_municipalities = JSON.parse(response.body)
     cities_municipalities.each do |city_municipality|
       if city_municipality['districtCode']
         district = District.find_by_code(city_municipality['districtCode'])
-        CityMunicipality.find_or_create_by(code: city_municipality['code'], name: city_municipality['name'], is_capital:city_municipality['isCapital'], is_city:city_municipality['isCity'], is_municipality: city_municipality['isMunicipality'], district: district)
+        CityMunicipality.find_or_create_by(code: city_municipality['code'], name: city_municipality['name'], is_capital: city_municipality['isCapital'], is_city: city_municipality['isCity'], is_municipality: city_municipality['isMunicipality'], district: district)
       else
         province = Province.find_by_code(city_municipality['provinceCode'])
-        CityMunicipality.find_or_create_by(code: city_municipality['code'], name: city_municipality['name'], is_capital:city_municipality['isCapital'], is_city:city_municipality['isCity'], is_municipality: city_municipality['isMunicipality'], province: province)
+        CityMunicipality.find_or_create_by(code: city_municipality['code'], name: city_municipality['name'], is_capital: city_municipality['isCapital'], is_city: city_municipality['isCity'], is_municipality: city_municipality['isMunicipality'], province: province)
       end
-
+    end
+  end
+  def get_barangays
+    response = RestClient.get("#{url}/barangays")
+    barangays = JSON.parse(response.body)
+    barangays.each do |barangay|
+      if barangay['cityCode']
+        city_municipality = CityMunicipality.find_by_code(barangay['cityCode'])
+        Barangay.find_or_create_by(code: barangay['code'], name: barangay['name'], city_municipality:city_municipality)
+      else
+        city_municipality = CityMunicipality.find_by_code(barangay['municipalityCode'])
+        Barangay.find_or_create_by(code: barangay['code'], name: barangay['name'], city_municipality:city_municipality)
+      end
     end
   end
 end
